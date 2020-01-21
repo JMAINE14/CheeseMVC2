@@ -1,48 +1,46 @@
-﻿using CheeseMVC.Models;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
-
+using CheeseMVC.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 namespace CheeseMVC.ViewModels
 {
     public class AddCheeseViewModel
     {
         [Required]
-        [Display(Name = "Cheese Name")]
+        [Display(Name = "Category")]
+        public int CategoryID { get; set; }
+        public List<SelectListItem> Categories { get; set; }
         public string Name { get; set; }
-
-        [Required(ErrorMessage = "You must give your cheese a description")]
         public string Description { get; set; }
+        public int Rating { get; set; }
+        
 
-        public CheeseType Type { get; set; }
+        public AddCheeseViewModel(IEnumerable<CheeseCategory> categories)
+        {
+            Categories = new List<SelectListItem>();
 
-        public List<SelectListItem> CheeseTypes { get; set; }
-
-        public AddCheeseViewModel() {
-
-            CheeseTypes = new List<SelectListItem>();
-
-            // <option value="0">Hard</option>
-            CheeseTypes.Add(new SelectListItem {
-                Value = ((int) CheeseType.Hard).ToString(),
-                Text = CheeseType.Hard.ToString()
-            });
-
-            CheeseTypes.Add(new SelectListItem
+            foreach (CheeseCategory category in categories)
             {
-                Value = ((int)CheeseType.Soft).ToString(),
-                Text = CheeseType.Soft.ToString()
-            });
+                Categories.Add(new SelectListItem()
+                {
+                    Value = category.ID.ToString(),
+                    Text = category.Name
+                });
+            }
+        }
 
-            CheeseTypes.Add(new SelectListItem
+        public AddCheeseViewModel() { }
+
+        public Cheese CreateCheese()
+        {
+            return new Cheese
             {
-                Value = ((int)CheeseType.Fake).ToString(),
-                Text = CheeseType.Fake.ToString()
-            });
-
+                Name = this.Name,
+                Description = this.Description,
+                CategoryID = this.CategoryID,
+                Rating = this.Rating
+            };
         }
     }
 }

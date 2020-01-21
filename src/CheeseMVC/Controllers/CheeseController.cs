@@ -2,23 +2,33 @@
 using CheeseMVC.Models;
 using System.Collections.Generic;
 using CheeseMVC.ViewModels;
+using CheeseMVC.Data;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace CheeseMVC.Controllers
 {
     public class CheeseController : Controller
     {
+        private CheeseDbContext context;
+
+        public CheeseController(CheeseDbContext dbContext)
+        {
+            context = dbContext;
+        }
 
         // GET: /<controller>/
+        [HttpGet]
         public IActionResult Index()
         {
-            List<Cheese> cheeses = CheeseData.GetAll();
+            IList<Cheese> cheeses = context.Cheeses.Include(c => c.Category).ToList();
 
             return View(cheeses);
         }
 
         public IActionResult Add()
         {
-            AddCheeseViewModel addCheeseViewModel = new AddCheeseViewModel();
+            AddCheeseViewModel addCheeseViewModel = new AddCheeseViewModel(context.Categories.ToList());
             return View(addCheeseViewModel);
         }
 
@@ -27,15 +37,19 @@ namespace CheeseMVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                // retrieve the category of cheese by the id that is submitted when the user chooses a selectlist item of categories from the categories selectlist. 
+                CheeseCategory newCheeseCategory = context.Categories.Single(c => c.ID == addCheeseViewModel.CategoryID);
+
                 // Add the new cheese to my existing cheeses
                 Cheese newCheese = new Cheese
                 {
                     Name = addCheeseViewModel.Name,
                     Description = addCheeseViewModel.Description,
-                    Type = addCheeseViewModel.Type
+                    Category = newCheeseCategory
                 };
 
-                CheeseData.Add(newCheese);
+                context.Cheeses.Add(newCheese);
+                context.SaveChanges();
 
                 return Redirect("/Cheese");
             }
@@ -46,7 +60,7 @@ namespace CheeseMVC.Controllers
         public IActionResult Remove()
         {
             ViewBag.title = "Remove Cheeses";
-            ViewBag.cheeses = CheeseData.GetAll();
+            ViewBag.cheeses = context.Cheeses.ToList();
             return View();
         }
 
@@ -55,8 +69,11 @@ namespace CheeseMVC.Controllers
         {
             foreach (int cheeseId in cheeseIds)
             {
-                CheeseData.Remove(cheeseId);
+                Cheese theCheese = context.Cheeses.Single(c => c.ID == cheeseId);
+                context.Cheeses.Remove(theCheese);
             }
+
+            context.SaveChanges();
 
             return Redirect("/");
         }
